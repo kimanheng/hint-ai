@@ -140,21 +140,21 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
 }
 
 function getDefaultKeybinds() {
-    const isMac = process.platform === 'darwin';
+    // Windows-only application
     return {
-        moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
-        moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
-        moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
-        moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
-        toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
-        toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
-        nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
-        screenshot: isMac ? 'Cmd+S' : 'Ctrl+S',
-        previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
-        nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
-        scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
-        scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
-        emergencyErase: isMac ? 'Cmd+Shift+E' : 'Ctrl+Shift+E',
+        moveUp: 'Ctrl+Up',
+        moveDown: 'Ctrl+Down',
+        moveLeft: 'Ctrl+Left',
+        moveRight: 'Ctrl+Right',
+        toggleVisibility: 'Ctrl+\\',
+        toggleClickThrough: 'Ctrl+M',
+        nextStep: 'Ctrl+Enter',
+        screenshot: 'Ctrl+S',
+        previousResponse: 'Ctrl+[',
+        nextResponse: 'Ctrl+]',
+        scrollUp: 'Ctrl+Shift+Up',
+        scrollDown: 'Ctrl+Shift+Down',
+        emergencyErase: 'Ctrl+Shift+E',
     };
 }
 

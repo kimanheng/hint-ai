@@ -75,9 +75,8 @@ uses Electron. Key goals are:
 - **Local Transcription** – integrate `whisper.cpp` to allow offline speech-to-
   text. Investigate the architecture used in `transcriber/src/main` for model
   validation and GPU acceleration.
-- **Dual Audio Capture** – capture microphone and system audio simultaneously.
-  `transcriber` shows one approach using a native helper for macOS and
-  Electron's `getDisplayMedia` for other platforms.
+- **Dual Audio Capture** – capture microphone and system audio simultaneously
+  using Electron's `getDisplayMedia` API.
 - **Speaker Diarization** – explore tinydiarize for identifying speakers in mono
   audio streams.
 - **Voice Activity Detection** – skip silent or low‑quality segments before
@@ -90,7 +89,7 @@ uses Electron. Key goals are:
 ### TODO
 
 1. Research and prototype local transcription using `whisper.cpp`.
-2. Add dual‑stream audio capture logic for cross‑platform support.
+2. Add dual‑stream audio capture logic for Windows.
 3. Investigate speaker diarization options and integrate when feasible.
 4. Plan a migration path toward a proper testing setup (Jest or similar).
 5. Document security considerations for audio storage and processing.
