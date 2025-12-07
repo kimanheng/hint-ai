@@ -59,8 +59,8 @@ async function initializeGeminiSession(apiKey, customPrompt = '', selectedModel 
         // Default system prompt if none provided
         const systemPrompt = customPrompt || 'Hello, would you like any help?';
         
-        // Use selected model or default to Gemini 3 Pro
-        const modelName = selectedModel || 'gemini-3-pro-preview';
+        // Use selected model or default to Gemini 2.5 Flash
+        const modelName = selectedModel || 'gemini-2.5-flash';
         console.log('Initializing model:', modelName);
         
         const model = genAI.getGenerativeModel({ 

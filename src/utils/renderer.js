@@ -96,7 +96,7 @@ let tokenTracker = {
 async function initializeGemini() {
     const apiKey = localStorage.getItem('apiKey')?.trim();
     if (apiKey) {
-        const selectedModel = localStorage.getItem('selectedModel') || 'gemini-3-pro-preview';
+        const selectedModel = localStorage.getItem('selectedModel') || 'gemini-2.5-flash';
         const success = await ipcRenderer.invoke('initialize-gemini', apiKey, localStorage.getItem('customPrompt') || '', selectedModel);
         if (success) {
             cheddar.setStatus('Ready');

@@ -219,6 +219,33 @@ export class AssistantView extends LitElement {
             font-weight: 600;
         }
 
+        /* LaTeX/KaTeX styling */
+        .message-content .katex {
+            font-size: 1.1em;
+        }
+
+        .message-content .katex-display {
+            margin: 0.8em 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0.5em 0;
+        }
+
+        .message-content .katex-display > .katex {
+            text-align: center;
+        }
+
+        .message-content .latex-inline {
+            display: inline;
+        }
+
+        .message-content .latex-block {
+            display: block;
+            text-align: center;
+            margin: 0.8em 0;
+            overflow-x: auto;
+        }
+
         .input-area {
             display: flex;
             flex-direction: column;
@@ -279,33 +306,26 @@ export class AssistantView extends LitElement {
             align-items: center;
         }
 
-        .model-selector {
+        .model-toggle {
             background: var(--input-background);
             color: var(--text-color);
             border: 1px solid var(--button-border);
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             font-size: 11px;
             cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 6px center;
-            background-repeat: no-repeat;
-            background-size: 10px;
-            padding-right: 24px;
             transition: all 0.15s ease;
             white-space: nowrap;
+            user-select: none;
         }
 
-        .model-selector:hover {
+        .model-toggle:hover {
             background: var(--input-hover-background);
             border-color: var(--input-hover-border);
         }
 
-        .model-selector:focus {
-            outline: none;
-            border-color: var(--focus-border-color);
-            box-shadow: 0 0 0 2px var(--focus-box-shadow);
+        .model-toggle:active {
+            transform: scale(0.98);
         }
 
         .typing-indicator {
@@ -345,18 +365,28 @@ export class AssistantView extends LitElement {
         super();
         this.messages = [];
         this.onSendText = () => {};
-        this.selectedModel = localStorage.getItem('selectedModel') || 'gemini-3-pro-preview';
+        this.selectedModel = localStorage.getItem('selectedModel') || 'gemini-2.5-flash';
         this.isTyping = false;
         this.pendingScreenshot = null;
     }
 
-    handleModelChange(e) {
-        this.selectedModel = e.target.value;
+    handleModelChange() {
+        // Toggle between the two models
+        this.selectedModel = this.selectedModel === 'gemini-2.5-flash' ? 'gemini-3-pro' : 'gemini-2.5-flash';
         localStorage.setItem('selectedModel', this.selectedModel);
         
-        const statusMessage = `Model changed to ${this.selectedModel === 'gemini-3-pro-preview' ? 'Gemini 3 Pro' : 'Gemini 2.5 Flash'}. Restart your session for this to take effect.`;
+        // Persist to config file
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            ipcRenderer.invoke('set-selected-model', this.selectedModel);
+        }
+        
+        const modelName = this.selectedModel === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 3 Pro';
         if (window.cheddar) {
-            window.cheddar.setStatus(statusMessage);
+            window.cheddar.setStatus('Switching to ' + modelName + '...');
+            window.cheddar.initializeGemini().then(() => {
+                window.cheddar.setStatus('Switched to ' + modelName);
+            });
         }
         
         this.requestUpdate();
@@ -424,13 +454,93 @@ export class AssistantView extends LitElement {
                     gfm: true,
                     sanitize: false,
                 });
-                return window.marked.parse(content);
+                
+                // Process LaTeX before markdown parsing
+                let processedContent = this.processLaTeX(content);
+                
+                return window.marked.parse(processedContent);
             } catch (error) {
                 console.warn('Error parsing markdown:', error);
                 return this.escapeHtml(content).replace(/\n/g, '<br>');
             }
         }
         return this.escapeHtml(content).replace(/\n/g, '<br>');
+    }
+
+    processLaTeX(content) {
+        if (typeof window === 'undefined' || !window.katex) {
+            return content;
+        }
+
+        // Store code blocks to prevent LaTeX processing inside them
+        const codeBlocks = [];
+        let processedContent = content.replace(/```[\s\S]*?```|`[^`]+`/g, (match) => {
+            codeBlocks.push(match);
+            return `%%CODEBLOCK_${codeBlocks.length - 1}%%`;
+        });
+
+        // Process block LaTeX: $$...$$ (display mode)
+        processedContent = processedContent.replace(/\$\$([\s\S]+?)\$\$/g, (match, latex) => {
+            try {
+                return `<div class="latex-block">${window.katex.renderToString(latex.trim(), {
+                    displayMode: true,
+                    throwOnError: false,
+                    output: 'html'
+                })}</div>`;
+            } catch (error) {
+                console.warn('KaTeX block error:', error);
+                return match;
+            }
+        });
+
+        // Process inline LaTeX: $...$ (but not $$)
+        // Use negative lookbehind/lookahead to avoid matching $$ delimiters
+        processedContent = processedContent.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (match, latex) => {
+            try {
+                return `<span class="latex-inline">${window.katex.renderToString(latex.trim(), {
+                    displayMode: false,
+                    throwOnError: false,
+                    output: 'html'
+                })}</span>`;
+            } catch (error) {
+                console.warn('KaTeX inline error:', error);
+                return match;
+            }
+        });
+
+        // Also support \[...\] for display mode and \(...\) for inline mode
+        processedContent = processedContent.replace(/\\\[([\s\S]+?)\\\]/g, (match, latex) => {
+            try {
+                return `<div class="latex-block">${window.katex.renderToString(latex.trim(), {
+                    displayMode: true,
+                    throwOnError: false,
+                    output: 'html'
+                })}</div>`;
+            } catch (error) {
+                console.warn('KaTeX display error:', error);
+                return match;
+            }
+        });
+
+        processedContent = processedContent.replace(/\\\(([\s\S]+?)\\\)/g, (match, latex) => {
+            try {
+                return `<span class="latex-inline">${window.katex.renderToString(latex.trim(), {
+                    displayMode: false,
+                    throwOnError: false,
+                    output: 'html'
+                })}</span>`;
+            } catch (error) {
+                console.warn('KaTeX inline error:', error);
+                return match;
+            }
+        });
+
+        // Restore code blocks
+        processedContent = processedContent.replace(/%%CODEBLOCK_(\d+)%%/g, (match, index) => {
+            return codeBlocks[parseInt(index, 10)];
+        });
+
+        return processedContent;
     }
 
     escapeHtml(text) {
@@ -506,7 +616,7 @@ export class AssistantView extends LitElement {
         // Send if there's either text or a pending screenshot
         if (hasText || hasScreenshot) {
             // Use default message if sending screenshot without text
-            const message = hasText ? textInput.value.trim() : 'Answer all questions with maximum accuracy, and provide brief explanations for your answer.';
+            const message = hasText ? textInput.value.trim() : 'Answer all questions with maximum accuracy. Provide answer first, then provide brief explanations for your answer.';
             if (textInput) textInput.value = '';
             this.isTyping = true; // Show typing indicator
             await this.onSendText(message);
@@ -575,10 +685,9 @@ export class AssistantView extends LitElement {
                 ` : ''}
 
                 <div class="text-input-container">
-                    <select class="model-selector" .value=${this.selectedModel} @change=${this.handleModelChange} title="Select AI Model">
-                        <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                    </select>
+                    <div class="model-toggle" @click=${this.handleModelChange} title="Click to toggle AI Model (Ctrl+T)">
+                        ${this.selectedModel === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 3 Pro'}
+                    </div>
                 </div>
             </div>
         `;

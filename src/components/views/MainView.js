@@ -149,6 +149,7 @@ export class MainView extends LitElement {
         isInitializing: { type: Boolean },
         onLayoutModeChange: { type: Function },
         showApiKeyError: { type: Boolean },
+        apiKeyValue: { type: String },
     };
 
     constructor() {
@@ -158,6 +159,7 @@ export class MainView extends LitElement {
         this.isInitializing = false;
         this.onLayoutModeChange = () => {};
         this.showApiKeyError = false;
+        this.apiKeyValue = '';
         this.boundKeydownHandler = this.handleKeydown.bind(this);
     }
 
@@ -167,6 +169,9 @@ export class MainView extends LitElement {
             this.isInitializing = isInitializing;
         });
 
+        // Load API key from persistent config
+        this.loadApiKey();
+
         // Add keyboard event listener for Ctrl+Enter
         document.addEventListener('keydown', this.boundKeydownHandler);
 
@@ -174,6 +179,17 @@ export class MainView extends LitElement {
         this.loadLayoutMode();
         // Resize window for this view
         resizeLayout();
+    }
+
+    async loadApiKey() {
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            const result = await ipcRenderer.invoke('get-api-key');
+            if (result.success && result.apiKey) {
+                this.apiKeyValue = result.apiKey;
+                localStorage.setItem('apiKey', result.apiKey);
+            }
+        }
     }
 
     disconnectedCallback() {
@@ -193,7 +209,15 @@ export class MainView extends LitElement {
     }
 
     handleInput(e) {
+        this.apiKeyValue = e.target.value;
         localStorage.setItem('apiKey', e.target.value);
+        
+        // Save to persistent config
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            ipcRenderer.invoke('set-api-key', e.target.value);
+        }
+        
         // Clear error state when user starts typing
         if (this.showApiKeyError) {
             this.showApiKeyError = false;
@@ -263,7 +287,7 @@ export class MainView extends LitElement {
                 <input
                     type="password"
                     placeholder="Enter your Gemini API Key"
-                    .value=${localStorage.getItem('apiKey') || ''}
+                    .value=${this.apiKeyValue}
                     @input=${this.handleInput}
                     class="${this.showApiKeyError ? 'api-key-error' : ''}"
                 />

@@ -151,6 +151,7 @@ function getDefaultKeybinds() {
         scrollUp: 'Ctrl+Up',
         scrollDown: 'Ctrl+Down',
         emergencyErase: 'Ctrl+Shift+E',
+        toggleModel: 'Ctrl+T',
     };
 }
 
@@ -306,6 +307,49 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered emergencyErase: ${keybinds.emergencyErase}`);
         } catch (error) {
             console.error(`Failed to register emergencyErase (${keybinds.emergencyErase}):`, error);
+        }
+    }
+
+    // Register toggle model shortcut
+    if (keybinds.toggleModel) {
+        try {
+            globalShortcut.register(keybinds.toggleModel, () => {
+                console.log('Toggle Model shortcut triggered');
+                mainWindow.webContents.executeJavaScript(`
+                    (function() {
+                        const currentModel = localStorage.getItem('selectedModel') || 'gemini-2.5-flash';
+                        const newModel = currentModel === 'gemini-2.5-flash' ? 'gemini-3-pro' : 'gemini-2.5-flash';
+                        localStorage.setItem('selectedModel', newModel);
+                        
+                        // Persist to config file
+                        if (window.require) {
+                            const { ipcRenderer } = window.require('electron');
+                            ipcRenderer.invoke('set-selected-model', newModel);
+                        }
+                        
+                        const modelName = newModel === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 3 Pro';
+                        
+                        // Update AssistantView UI
+                        const assistantView = document.querySelector('hint-ai-app')?.shadowRoot?.querySelector('assistant-view');
+                        if (assistantView) {
+                            assistantView.selectedModel = newModel;
+                            assistantView.requestUpdate();
+                        }
+                        
+                        // Reinitialize session with new model
+                        if (window.cheddar) {
+                            window.cheddar.setStatus('Switching to ' + modelName + '...');
+                            window.cheddar.initializeGemini().then(() => {
+                                window.cheddar.setStatus('Switched to ' + modelName);
+                            });
+                        }
+                        console.log('Model toggled to:', newModel);
+                    })();
+                `);
+            });
+            console.log(`Registered toggleModel: ${keybinds.toggleModel}`);
+        } catch (error) {
+            console.error(`Failed to register toggleModel (${keybinds.toggleModel}):`, error);
         }
     }
 }

@@ -101,6 +101,40 @@ function setupGeneralIpcHandlers() {
         }
     });
 
+    ipcMain.handle('set-api-key', async (event, apiKey) => {
+        try {
+            const config = getLocalConfig();
+            config.apiKey = apiKey;
+            writeConfig(config);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting API key:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('get-api-key', async (event) => {
+        try {
+            const config = getLocalConfig();
+            return { success: true, apiKey: config.apiKey || '' };
+        } catch (error) {
+            console.error('Error getting API key:', error);
+            return { success: false, apiKey: '' };
+        }
+    });
+
+    ipcMain.handle('set-selected-model', async (event, selectedModel) => {
+        try {
+            const config = getLocalConfig();
+            config.selectedModel = selectedModel;
+            writeConfig(config);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting selected model:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     ipcMain.handle('quit-application', async event => {
         try {
             app.quit();

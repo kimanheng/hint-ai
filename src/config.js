@@ -6,7 +6,9 @@ const os = require('os');
 const DEFAULT_CONFIG = {
     onboarded: false,
     stealthLevel: "ultra",
-    layout: "normal"
+    layout: "normal",
+    apiKey: "",
+    selectedModel: "gemini-2.5-flash"
 };
 
 // Get the config directory path for Windows
@@ -101,5 +103,7 @@ function getLocalConfig() {
 // Export only the necessary functions
 module.exports = {
     getLocalConfig,
-    writeConfig
+    writeConfig,
+    readExistingConfig,
+    getConfigFilePath
 }; 

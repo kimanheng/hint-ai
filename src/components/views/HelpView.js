@@ -263,6 +263,7 @@ export class HelpView extends LitElement {
             scrollUp: 'Ctrl+Up',
             scrollDown: 'Ctrl+Down',
             emergencyErase: 'Ctrl+Shift+E',
+            toggleModel: 'Ctrl+T',
         };
     }
 
@@ -352,6 +353,10 @@ export class HelpView extends LitElement {
                             <div class="shortcut-item">
                                 <span class="shortcut-description">Go Back to Main</span>
                                 <div class="shortcut-keys">${this.formatKeybind(this.keybinds.goBack)}</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-description">Toggle AI Model</span>
+                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.toggleModel)}</div>
                             </div>
                         </div>
 

@@ -23,6 +23,7 @@ By using this project, you agree that you are responsible for complying with all
 | Move Window Left | `Ctrl + Shift + Left` |
 | Move Window Right | `Ctrl + Shift + Right` |
 | Toggle Visibility | `Ctrl + \` |
+| Toggle AI Model | `Ctrl + T` |
 | Screenshot + Send | `Ctrl + Enter` |
 | Go Back | `Ctrl + Backspace` |
 | Scroll Up | `Ctrl + Up` |
