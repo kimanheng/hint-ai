@@ -2,8 +2,6 @@ import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
 import { AppHeader } from './AppHeader.js';
 import { MainView } from '../views/MainView.js';
 import { CustomizeView } from '../views/CustomizeView.js';
-import { HelpView } from '../views/HelpView.js';
-import { HistoryView } from '../views/HistoryView.js';
 import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AdvancedView } from '../views/AdvancedView.js';
@@ -12,7 +10,7 @@ export class HintAIApp extends LitElement {
     static styles = css`
         * {
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
             margin: 0px;
             padding: 0px;
             cursor: default;
@@ -115,7 +113,7 @@ export class HintAIApp extends LitElement {
         this.statusText = '';
         this.isRecording = false;
         this.sessionActive = false;
-        this.selectedScreenshotInterval = localStorage.getItem('selectedScreenshotInterval') || '5';
+        this.selectedScreenshotInterval = localStorage.getItem('selectedScreenshotInterval') || 'manual';
         this.selectedImageQuality = localStorage.getItem('selectedImageQuality') || 'medium';
         this.layoutMode = localStorage.getItem('layoutMode') || 'normal';
         this.advancedMode = localStorage.getItem('advancedMode') === 'true';
@@ -172,23 +170,13 @@ export class HintAIApp extends LitElement {
         this.requestUpdate();
     }
 
-    handleHelpClick() {
-        this.currentView = 'help';
-        this.requestUpdate();
-    }
-
-    handleHistoryClick() {
-        this.currentView = 'history';
-        this.requestUpdate();
-    }
-
     handleAdvancedClick() {
         this.currentView = 'advanced';
         this.requestUpdate();
     }
 
     async handleClose() {
-        if (this.currentView === 'customize' || this.currentView === 'help' || this.currentView === 'history') {
+        if (this.currentView === 'customize') {
             this.currentView = 'main';
         } else if (this.currentView === 'assistant') {
             cheddar.stopCapture();
@@ -374,12 +362,6 @@ export class HintAIApp extends LitElement {
                     ></customize-view>
                 `;
 
-            case 'help':
-                return html` <help-view .onExternalLinkClick=${url => this.handleExternalLinkClick(url)}></help-view> `;
-
-            case 'history':
-                return html` <history-view></history-view> `;
-
             case 'advanced':
                 return html` <advanced-view></advanced-view> `;
 
@@ -408,8 +390,6 @@ export class HintAIApp extends LitElement {
                         .statusText=${this.statusText}
                         .advancedMode=${this.advancedMode}
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
-                        .onHelpClick=${() => this.handleHelpClick()}
-                        .onHistoryClick=${() => this.handleHistoryClick()}
                         .onAdvancedClick=${() => this.handleAdvancedClick()}
                         .onCloseClick=${() => this.handleClose()}
                         .onBackClick=${() => this.handleBackClick()}

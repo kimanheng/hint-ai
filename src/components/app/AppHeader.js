@@ -92,8 +92,6 @@ export class AppHeader extends LitElement {
         currentView: { type: String },
         statusText: { type: String },
         onCustomizeClick: { type: Function },
-        onHelpClick: { type: Function },
-        onHistoryClick: { type: Function },
         onCloseClick: { type: Function },
         onBackClick: { type: Function },
         onHideToggleClick: { type: Function },
@@ -107,8 +105,6 @@ export class AppHeader extends LitElement {
         this.currentView = 'main';
         this.statusText = '';
         this.onCustomizeClick = () => {};
-        this.onHelpClick = () => {};
-        this.onHistoryClick = () => {};
         this.onCloseClick = () => {};
         this.onBackClick = () => {};
         this.onHideToggleClick = () => {};
@@ -122,8 +118,6 @@ export class AppHeader extends LitElement {
             onboarding: 'Welcome to Hint AI',
             main: 'Hint AI',
             customize: 'Customize',
-            help: 'Help & Shortcuts',
-            history: 'Conversation History',
             advanced: 'Advanced Tools',
             assistant: 'Hint AI',
         };
@@ -131,7 +125,7 @@ export class AppHeader extends LitElement {
     }
 
     isNavigationView() {
-        const navigationViews = ['customize', 'help', 'history', 'advanced'];
+        const navigationViews = ['customize', 'advanced'];
         return navigationViews.includes(this.currentView);
     }
 
@@ -143,55 +137,22 @@ export class AppHeader extends LitElement {
                     ${this.currentView === 'assistant'
                         ? html`
                               <span>${this.statusText}</span>
-                              <span style="display: flex; align-items: center; gap: 4px; opacity: 0.7; font-size: 11px;">
-                                  📸 Screenshot:
-                                  <span class="key" style="pointer-events: none; font-size: 10px;">${cheddar.isMacOS ? 'Cmd' : 'Ctrl'}</span>
-                                  <span class="key" style="font-size: 10px;">Enter</span>
-                              </span>
+                              <button class="button" style="pointer-events: none;">
+                                  Screenshot + Send&nbsp;&nbsp;<span class="key">Ctrl</span
+                                  >&nbsp;&nbsp;<span class="key">Enter</span>
+                              </button>
+                              <button class="button" style="pointer-events: none;">
+                                  Scroll&nbsp;&nbsp;<span class="key">Ctrl</span
+                                  >&nbsp;&nbsp;<span class="key">↑↓</span>
+                              </button>
+                              <button class="button" style="pointer-events: none;">
+                                  Exit&nbsp;&nbsp;<span class="key">Ctrl</span
+                                  >&nbsp;&nbsp;<span class="key">⌫</span>
+                              </button>
                           `
                         : ''}
                     ${this.currentView === 'main'
                         ? html`
-                              <button class="icon-button" @click=${this.onHistoryClick}>
-                                  <?xml version="1.0" encoding="UTF-8"?><svg
-                                      width="24px"
-                                      height="24px"
-                                      stroke-width="1.7"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      color="currentColor"
-                                  >
-                                      <path
-                                          d="M12 21V7C12 5.89543 12.8954 5 14 5H21.4C21.7314 5 22 5.26863 22 5.6V18.7143"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                      ></path>
-                                      <path
-                                          d="M12 21V7C12 5.89543 11.1046 5 10 5H2.6C2.26863 5 2 5.26863 2 5.6V18.7143"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                      ></path>
-                                      <path d="M14 19L22 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-                                      <path d="M10 19L2 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-                                      <path
-                                          d="M12 21C12 19.8954 12.8954 19 14 19"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                      <path
-                                          d="M12 21C12 19.8954 11.1046 19 10 19"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                  </svg>
-                              </button>
                               ${this.advancedMode
                                   ? html`
                                         <button class="icon-button" @click=${this.onAdvancedClick} title="Advanced Tools">
@@ -263,68 +224,10 @@ export class AppHeader extends LitElement {
                                       ></path>
                                   </svg>
                               </button>
-                              <button class="icon-button" @click=${this.onHelpClick}>
-                                  <?xml version="1.0" encoding="UTF-8"?><svg
-                                      width="24px"
-                                      height="24px"
-                                      stroke-width="1.7"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      color="currentColor"
-                                  >
-                                      <path
-                                          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                      <path
-                                          d="M9 9C9 5.49997 14.5 5.5 14.5 9C14.5 11.5 12 10.9999 12 13.9999"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                      <path
-                                          d="M12 18.01L12.01 17.9989"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                  </svg>
-                              </button>
                           `
                         : ''}
-                    ${this.currentView === 'assistant'
+                    ${this.currentView !== 'assistant'
                         ? html`
-                              <button @click=${this.onHideToggleClick} class="button">
-                                  Hide&nbsp;&nbsp;<span class="key" style="pointer-events: none;">${cheddar.isMacOS ? 'Cmd' : 'Ctrl'}</span
-                                  >&nbsp;&nbsp;<span class="key">&bsol;</span>
-                              </button>
-                              <button @click=${this.onCloseClick} class="icon-button window-close">
-                                  <?xml version="1.0" encoding="UTF-8"?><svg
-                                      width="24px"
-                                      height="24px"
-                                      stroke-width="1.7"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      color="currentColor"
-                                  >
-                                      <path
-                                          d="M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                  </svg>
-                              </button>
-                          `
-                        : html`
                               <button @click=${this.isNavigationView() ? this.onBackClick : this.onCloseClick} class="icon-button window-close">
                                   <?xml version="1.0" encoding="UTF-8"?><svg
                                       width="24px"
@@ -344,7 +247,8 @@ export class AppHeader extends LitElement {
                                       ></path>
                                   </svg>
                               </button>
-                          `}
+                          `
+                        : ''}
                 </div>
             </div>
         `;

@@ -48,18 +48,6 @@ export class AssistantView extends LitElement {
             flex-direction: column;
             gap: 8px;
             max-width: 85%;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .message.user {
@@ -291,27 +279,6 @@ export class AssistantView extends LitElement {
             align-items: center;
         }
 
-        .text-input-container input {
-            flex: 1;
-            background: var(--input-background);
-            color: var(--text-color);
-            border: 1px solid var(--button-border);
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .text-input-container input:focus {
-            outline: none;
-            border-color: var(--focus-border-color);
-            box-shadow: 0 0 0 3px var(--focus-box-shadow);
-            background: var(--input-focus-background);
-        }
-
-        .text-input-container input::placeholder {
-            color: var(--placeholder-color);
-        }
-
         .model-selector {
             background: var(--input-background);
             color: var(--text-color);
@@ -341,35 +308,6 @@ export class AssistantView extends LitElement {
             box-shadow: 0 0 0 2px var(--focus-box-shadow);
         }
 
-        .send-button {
-            background: var(--focus-border-color, #007aff);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .send-button:hover {
-            background: var(--focus-border-color-hover, #0062cc);
-            transform: scale(1.02);
-        }
-
-        .send-button:active {
-            transform: scale(0.98);
-        }
-
-        .send-button svg {
-            width: 16px;
-            height: 16px;
-        }
-
         .typing-indicator {
             display: flex;
             gap: 4px;
@@ -382,16 +320,6 @@ export class AssistantView extends LitElement {
             height: 8px;
             background: var(--description-color);
             border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out;
-        }
-
-        .typing-indicator .dot:nth-child(1) { animation-delay: 0s; }
-        .typing-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-6px); }
         }
 
         .message-time {
@@ -578,7 +506,7 @@ export class AssistantView extends LitElement {
         // Send if there's either text or a pending screenshot
         if (hasText || hasScreenshot) {
             // Use default message if sending screenshot without text
-            const message = hasText ? textInput.value.trim() : 'Answer first, explanation later';
+            const message = hasText ? textInput.value.trim() : 'Answer all questions with maximum accuracy, and provide brief explanations for your answer.';
             if (textInput) textInput.value = '';
             this.isTyping = true; // Show typing indicator
             await this.onSendText(message);
@@ -601,7 +529,7 @@ export class AssistantView extends LitElement {
         return html`
             <div class="chat-container">
                 ${this.messages.length === 0
-                    ? html`<div class="empty-chat">Hello, I'm ready to help!<br/>Send a screenshot or type a message.</div>`
+                    ? html`<div class="empty-chat">Hello, I'm ready to help!<br/>Ctrl + Enter to screenshot and send.</div>`
                     : this.messages.map(msg => {
                           if (msg.type === 'user') {
                               return html`
@@ -651,15 +579,6 @@ export class AssistantView extends LitElement {
                         <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
                         <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                     </select>
-
-                    <input type="text" id="textInput" placeholder="${this.pendingScreenshot ? 'Type a message about the screenshot...' : 'Type a message...'}" @keydown=${this.handleTextKeydown} />
-
-                    <button class="send-button" @click=${this.handleSendText} title="Send message">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
                 </div>
             </div>
         `;

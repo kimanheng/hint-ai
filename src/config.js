@@ -5,27 +5,14 @@ const os = require('os');
 // Default configuration
 const DEFAULT_CONFIG = {
     onboarded: false,
-    stealthLevel: "balanced",
+    stealthLevel: "ultra",
     layout: "normal"
 };
 
-// Get the config directory path based on OS
+// Get the config directory path for Windows
 function getConfigDir() {
-    const platform = os.platform();
-    let configDir;
-    
-    if (platform === 'win32') {
-        // Windows: %APPDATA%\hint-ai-config
-        configDir = path.join(os.homedir(), 'AppData', 'Roaming', 'hint-ai-config');
-    } else if (platform === 'darwin') {
-        // macOS: ~/Library/Application Support/hint-ai-config
-        configDir = path.join(os.homedir(), 'Library', 'Application Support', 'hint-ai-config');
-    } else {
-        // Linux and others: ~/.config/hint-ai-config
-        configDir = path.join(os.homedir(), '.config', 'hint-ai-config');
-    }
-    
-    return configDir;
+    // Windows: %APPDATA%\hint-ai-config
+    return path.join(os.homedir(), 'AppData', 'Roaming', 'hint-ai-config');
 }
 
 function getConfigFilePath() {

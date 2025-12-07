@@ -5,8 +5,6 @@ export class OnboardingView extends LitElement {
         * {
             font-family:
                 'Inter',
-                -apple-system,
-                BlinkMacSystemFont,
                 'Segoe UI',
                 Roboto,
                 sans-serif;
@@ -440,17 +438,17 @@ export class OnboardingView extends LitElement {
                 icon: 'assets/onboarding/welcome.svg',
                 title: 'Welcome to Hint AI',
                 content:
-                    'Your AI assistant that listens and watches, then provides intelligent suggestions automatically during interviews and meetings.',
+                    'Your secret AI companion that helps you ace exams by providing real-time answers and solutions during tests.',
             },
             {
                 icon: 'assets/onboarding/security.svg',
-                title: 'Completely Private',
-                content: 'Invisible to screen sharing apps and recording software. Your secret advantage stays completely hidden from others.',
+                title: 'Completely Undetectable',
+                content: 'Invisible to proctoring software and screen monitoring tools. Your secret advantage stays completely hidden from examiners.',
             },
             {
                 icon: 'assets/onboarding/context.svg',
-                title: 'Add Your Context',
-                content: 'Share relevant information to help the AI provide better, more personalized assistance.',
+                title: 'Add Your Study Materials',
+                content: 'Paste your study notes, textbook content, or course materials to help the AI provide accurate exam answers.',
                 showTextarea: true,
             },
             {
@@ -461,8 +459,8 @@ export class OnboardingView extends LitElement {
             },
             {
                 icon: 'assets/onboarding/ready.svg',
-                title: 'Ready to Go',
-                content: 'Add your Gemini API key in settings and start getting AI-powered assistance in real-time.',
+                title: 'Ready to Ace Your Exam',
+                content: 'Add your Gemini API key in settings and start getting real-time exam assistance.',
             },
         ];
 
@@ -485,7 +483,7 @@ export class OnboardingView extends LitElement {
                         ? html`
                               <textarea
                                   class="context-textarea"
-                                  placeholder="Paste your resume, job description, or any relevant context here..."
+                                  placeholder="Paste your study notes, formulas, textbook excerpts, or course materials here..."
                                   .value=${this.contextText}
                                   @input=${this.handleContextInput}
                               ></textarea>
@@ -496,15 +494,15 @@ export class OnboardingView extends LitElement {
                               <div class="feature-list">
                                   <div class="feature-item">
                                       <span class="feature-icon">🎨</span>
-                                      Customize AI behavior and responses
+                                      Customize AI responses for your subject
                                   </div>
                                   <div class="feature-item">
                                       <span class="feature-icon">📚</span>
-                                      Review conversation history
+                                      Review answer history
                                   </div>
                                   <div class="feature-item">
                                       <span class="feature-icon">🔧</span>
-                                      Adjust capture settings and intervals
+                                      Adjust capture settings for exam screens
                                   </div>
                               </div>
                           `

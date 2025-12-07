@@ -14,15 +14,14 @@ function ensureDataDirectories() {
     const cheddarDir = path.join(homeDir, 'cheddar');
     const dataDir = path.join(cheddarDir, 'data');
     const imageDir = path.join(dataDir, 'image');
-    const audioDir = path.join(dataDir, 'audio');
 
-    [cheddarDir, dataDir, imageDir, audioDir].forEach(dir => {
+    [cheddarDir, dataDir, imageDir].forEach(dir => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
     });
 
-    return { imageDir, audioDir };
+    return { imageDir };
 }
 
 function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
@@ -54,7 +53,7 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
     session.defaultSession.setDisplayMediaRequestHandler(
         (request, callback) => {
             desktopCapturer.getSources({ types: ['screen'] }).then(sources => {
-                callback({ video: sources[0], audio: 'loopback' });
+                callback({ video: sources[0] });
             });
         },
         { useSystemPicker: true }
@@ -142,18 +141,18 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
 function getDefaultKeybinds() {
     // Windows-only application
     return {
-        moveUp: 'Ctrl+Up',
-        moveDown: 'Ctrl+Down',
-        moveLeft: 'Ctrl+Left',
-        moveRight: 'Ctrl+Right',
+        moveUp: 'Ctrl+Shift+Up',
+        moveDown: 'Ctrl+Shift+Down',
+        moveLeft: 'Ctrl+Shift+Left',
+        moveRight: 'Ctrl+Shift+Right',
         toggleVisibility: 'Ctrl+\\',
         toggleClickThrough: 'Ctrl+M',
         nextStep: 'Ctrl+Enter',
-        screenshot: 'Ctrl+S',
+        goBack: 'Ctrl+Backspace',
         previousResponse: 'Ctrl+[',
         nextResponse: 'Ctrl+]',
-        scrollUp: 'Ctrl+Shift+Up',
-        scrollDown: 'Ctrl+Shift+Down',
+        scrollUp: 'Ctrl+Up',
+        scrollDown: 'Ctrl+Down',
         emergencyErase: 'Ctrl+Shift+E',
     };
 }
@@ -261,22 +260,22 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
         }
     }
 
-    // Register screenshot shortcut
-    if (keybinds.screenshot) {
+    // Register go back shortcut (returns to main view)
+    if (keybinds.goBack) {
         try {
-            globalShortcut.register(keybinds.screenshot, async () => {
-                console.log('Screenshot shortcut triggered');
+            globalShortcut.register(keybinds.goBack, async () => {
+                console.log('Go back shortcut triggered');
                 try {
                     mainWindow.webContents.executeJavaScript(`
-                        cheddar.handleShortcut('screenshot');
+                        cheddar.handleShortcut('goBack');
                     `);
                 } catch (error) {
-                    console.error('Error handling screenshot shortcut:', error);
+                    console.error('Error handling go back shortcut:', error);
                 }
             });
-            console.log(`Registered screenshot: ${keybinds.screenshot}`);
+            console.log(`Registered goBack: ${keybinds.goBack}`);
         } catch (error) {
-            console.error(`Failed to register screenshot (${keybinds.screenshot}):`, error);
+            console.error(`Failed to register goBack (${keybinds.goBack}):`, error);
         }
     }
 
@@ -362,8 +361,18 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
 
 function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
     ipcMain.on('view-changed', (event, view) => {
-        if (view !== 'assistant' && !mainWindow.isDestroyed()) {
-            mainWindow.setIgnoreMouseEvents(false);
+        if (!mainWindow.isDestroyed()) {
+            if (view === 'assistant') {
+                // Enable click-through mode for assistant view (overlay mode)
+                mainWindow.setIgnoreMouseEvents(true, { forward: true });
+                mouseEventsIgnored = true;
+                mainWindow.webContents.send('click-through-toggled', true);
+            } else {
+                // Disable click-through mode for other views
+                mainWindow.setIgnoreMouseEvents(false);
+                mouseEventsIgnored = false;
+                mainWindow.webContents.send('click-through-toggled', false);
+            }
         }
     });
 
@@ -501,37 +510,13 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
 
             let targetWidth, targetHeight;
 
-            // Determine base size from layout mode
+            // Determine base size from layout mode - same size for all views (like AssistantView)
             const baseWidth = layoutMode === 'compact' ? 700 : 900;
             const baseHeight = layoutMode === 'compact' ? 500 : 600;
 
-            // Adjust height based on view
-            switch (viewName) {
-                case 'customize':
-                case 'settings':
-                    targetWidth = baseWidth;
-                    targetHeight = layoutMode === 'compact' ? 700 : 800;
-                    break;
-                case 'help':
-                    targetWidth = baseWidth;
-                    targetHeight = layoutMode === 'compact' ? 650 : 750;
-                    break;
-                case 'history':
-                    targetWidth = baseWidth;
-                    targetHeight = layoutMode === 'compact' ? 650 : 750;
-                    break;
-                case 'advanced':
-                    targetWidth = baseWidth;
-                    targetHeight = layoutMode === 'compact' ? 600 : 700;
-                    break;
-                case 'main':
-                case 'assistant':
-                case 'onboarding':
-                default:
-                    targetWidth = baseWidth;
-                    targetHeight = baseHeight;
-                    break;
-            }
+            // All views use the same size as AssistantView
+            targetWidth = baseWidth;
+            targetHeight = baseHeight;
 
             const [currentWidth, currentHeight] = mainWindow.getSize();
             console.log('Current window size:', currentWidth, 'x', currentHeight);

@@ -4,7 +4,7 @@ import { resizeLayout } from '../../utils/windowResize.js';
 export class HelpView extends LitElement {
     static styles = css`
         * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
             cursor: default;
             user-select: none;
         }
@@ -12,6 +12,8 @@ export class HelpView extends LitElement {
         :host {
             display: block;
             padding: 12px;
+            height: 100%;
+            overflow-y: auto;
         }
 
         .help-container {
@@ -250,20 +252,19 @@ export class HelpView extends LitElement {
     }
 
     getDefaultKeybinds() {
-        const isMac = cheddar.isMacOS || navigator.platform.includes('Mac');
         return {
-            moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
-            moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
-            moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
-            moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
-            toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
-            toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
-            nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
-            screenshot: isMac ? 'Cmd+S' : 'Ctrl+S',
-            previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
-            nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
-            scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
-            scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
+            moveUp: 'Ctrl+Shift+Up',
+            moveDown: 'Ctrl+Shift+Down',
+            moveLeft: 'Ctrl+Shift+Left',
+            moveRight: 'Ctrl+Shift+Right',
+            toggleVisibility: 'Ctrl+\\',
+            toggleClickThrough: 'Ctrl+M',
+            nextStep: 'Ctrl+Enter',
+            goBack: 'Ctrl+Backspace',
+            previousResponse: 'Ctrl+[',
+            nextResponse: 'Ctrl+]',
+            scrollUp: 'Ctrl+Up',
+            scrollDown: 'Ctrl+Down',
         };
     }
 
@@ -288,9 +289,6 @@ export class HelpView extends LitElement {
     }
 
     render() {
-        const isMacOS = cheddar.isMacOS || false;
-        const isLinux = cheddar.isLinux || false;
-
         return html`
             <div class="help-container">
                 <div class="option-group">
@@ -350,12 +348,12 @@ export class HelpView extends LitElement {
                         <div class="keyboard-group">
                             <div class="keyboard-group-title">AI Actions</div>
                             <div class="shortcut-item">
-                                <span class="shortcut-description">Take screenshot</span>
-                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.screenshot)}</div>
+                                <span class="shortcut-description">Screenshot + Send</span>
+                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextStep)}</div>
                             </div>
                             <div class="shortcut-item">
-                                <span class="shortcut-description">Send message / Start session</span>
-                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextStep)}</div>
+                                <span class="shortcut-description">Go Back to Main</span>
+                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.goBack)}</div>
                             </div>
                         </div>
 
@@ -402,16 +400,16 @@ export class HelpView extends LitElement {
                     </div>
                     <div class="usage-steps">
                         <div class="usage-step"><strong>Start a Session:</strong> Enter your Gemini API key and click "Start Session"</div>
-                        <div class="usage-step"><strong>Customize:</strong> Choose your profile and language in the settings</div>
+                        <div class="usage-step"><strong>Customize:</strong> Choose your exam type and add study materials in settings</div>
                         <div class="usage-step">
-                            <strong>Position Window:</strong> Use keyboard shortcuts to move the window to your desired location
+                            <strong>Position Window:</strong> Use keyboard shortcuts to move the window to a discreet location
                         </div>
                         <div class="usage-step">
                             <strong>Click-through Mode:</strong> Use ${this.formatKeybind(this.keybinds.toggleClickThrough)} to make the window
                             click-through
                         </div>
-                        <div class="usage-step"><strong>Get AI Help:</strong> The AI will analyze your screen and audio to provide assistance</div>
-                        <div class="usage-step"><strong>Text Messages:</strong> Type questions or requests to the AI using the text input</div>
+                        <div class="usage-step"><strong>Get Answers:</strong> The AI will analyze your screen to provide exam answers</div>
+                        <div class="usage-step"><strong>Ask Questions:</strong> Type specific questions to get detailed solutions</div>
                         <div class="usage-step">
                             <strong>Navigate Responses:</strong> Use ${this.formatKeybind(this.keybinds.previousResponse)} and
                             ${this.formatKeybind(this.keybinds.nextResponse)} to browse through AI responses
@@ -425,37 +423,30 @@ export class HelpView extends LitElement {
                     </div>
                     <div class="profiles-grid">
                         <div class="profile-item">
-                            <div class="profile-name">Job Interview</div>
-                            <div class="profile-description">Get help with interview questions and responses</div>
+                            <div class="profile-name">Multiple Choice</div>
+                            <div class="profile-description">Get answers for multiple choice exam questions</div>
                         </div>
                         <div class="profile-item">
-                            <div class="profile-name">Sales Call</div>
-                            <div class="profile-description">Assistance with sales conversations and objection handling</div>
+                            <div class="profile-name">Essay Questions</div>
+                            <div class="profile-description">Assistance with essay and written exam responses</div>
                         </div>
                         <div class="profile-item">
-                            <div class="profile-name">Business Meeting</div>
-                            <div class="profile-description">Support for professional meetings and discussions</div>
+                            <div class="profile-name">Math & Science</div>
+                            <div class="profile-description">Help with calculations, formulas, and problem solving</div>
                         </div>
                         <div class="profile-item">
-                            <div class="profile-name">Presentation</div>
-                            <div class="profile-description">Help with presentations and public speaking</div>
+                            <div class="profile-name">Coding Exams</div>
+                            <div class="profile-description">Solutions for programming and coding assessments</div>
                         </div>
                         <div class="profile-item">
-                            <div class="profile-name">Negotiation</div>
-                            <div class="profile-description">Guidance for business negotiations and deals</div>
+                            <div class="profile-name">Open Book</div>
+                            <div class="profile-description">Quick lookup assistance for open book exams</div>
                         </div>
                         <div class="profile-item">
-                            <div class="profile-name">Exam Assistant</div>
-                            <div class="profile-description">Academic assistance for test-taking and exam questions</div>
+                            <div class="profile-name">Proctored Exams</div>
+                            <div class="profile-description">Stealth assistance for monitored online exams</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="option-group">
-                    <div class="option-label">
-                        <span>Audio Input</span>
-                    </div>
-                    <div class="description">The AI listens to conversations and provides contextual assistance based on what it hears.</div>
                 </div>
             </div>
         `;

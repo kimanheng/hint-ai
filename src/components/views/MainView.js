@@ -167,7 +167,7 @@ export class MainView extends LitElement {
             this.isInitializing = isInitializing;
         });
 
-        // Add keyboard event listener for Ctrl+Enter (or Cmd+Enter on Mac)
+        // Add keyboard event listener for Ctrl+Enter
         document.addEventListener('keydown', this.boundKeydownHandler);
 
         // Load and apply layout mode on startup
@@ -184,8 +184,7 @@ export class MainView extends LitElement {
     }
 
     handleKeydown(e) {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const isStartShortcut = isMac ? e.metaKey && e.key === 'Enter' : e.ctrlKey && e.key === 'Enter';
+        const isStartShortcut = e.ctrlKey && e.key === 'Enter';
 
         if (isStartShortcut) {
             e.preventDefault();
@@ -236,27 +235,6 @@ export class MainView extends LitElement {
     }
 
     getStartButtonText() {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-
-        const cmdIcon = html`<svg width="14px" height="14px" viewBox="0 0 24 24" stroke-width="2" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M15 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path
-                d="M9 6C9 4.34315 7.65685 3 6 3C4.34315 3 3 4.34315 3 6C3 7.65685 4.34315 9 6 9H18C19.6569 9 21 7.65685 21 6C21 4.34315 19.6569 3 18 3C16.3431 3 15 4.34315 15 6"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            ></path>
-            <path
-                d="M9 18C9 19.6569 7.65685 21 6 21C4.34315 21 3 19.6569 3 18C3 16.3431 4.34315 15 6 15H18C19.6569 15 21 16.3431 21 18C21 19.6569 19.6569 21 18 21C16.3431 21 15 19.6569 15 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            ></path>
-        </svg>`;
-
         const enterIcon = html`<svg width="14px" height="14px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
                 d="M10.25 19.25L6.75 15.75L10.25 12.25"
@@ -274,11 +252,7 @@ export class MainView extends LitElement {
             ></path>
         </svg>`;
 
-        if (isMac) {
-            return html`Start Session <span class="shortcut-icons">${cmdIcon}${enterIcon}</span>`;
-        } else {
-            return html`Start Session <span class="shortcut-icons">Ctrl${enterIcon}</span>`;
-        }
+        return html`Start Session <span class="shortcut-icons">Ctrl${enterIcon}</span>`;
     }
 
     render() {
@@ -298,8 +272,8 @@ export class MainView extends LitElement {
                 </button>
             </div>
             <p class="description">
-                dont have an api key?
-                <span @click=${this.handleAPIKeyHelpClick} class="link">get one here</span>
+                Don't have an API key?
+                <span @click=${this.handleAPIKeyHelpClick} class="link">Get One Here</span>
             </p>
         `;
     }

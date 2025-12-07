@@ -1,13 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { BrowserWindow, ipcMain } = require('electron');
 
-// Conversation tracking variables
-let currentSessionId = null;
-let conversationHistory = [];
 let isInitializingSession = false;
-
-// Active chat session
-let activeChat = null;
 let geminiModel = null;
 
 function sendToRenderer(channel, data) {
@@ -16,44 +10,6 @@ function sendToRenderer(channel, data) {
         windows[0].webContents.send(channel, data);
     }
 }
-
-// Conversation management functions
-function initializeNewSession() {
-    currentSessionId = Date.now().toString();
-    conversationHistory = [];
-    console.log('New conversation session started:', currentSessionId);
-}
-
-function saveConversationTurn(userMessage, aiResponse) {
-    if (!currentSessionId) {
-        initializeNewSession();
-    }
-
-    const conversationTurn = {
-        timestamp: Date.now(),
-        user_message: userMessage.trim(),
-        ai_response: aiResponse.trim(),
-    };
-
-    conversationHistory.push(conversationTurn);
-    console.log('Saved conversation turn:', conversationTurn);
-
-    // Send to renderer to save in IndexedDB
-    sendToRenderer('save-conversation-turn', {
-        sessionId: currentSessionId,
-        turn: conversationTurn,
-        fullHistory: conversationHistory,
-    });
-}
-
-function getCurrentSessionData() {
-    return {
-        sessionId: currentSessionId,
-        history: conversationHistory,
-    };
-}
-
-// Removed reconnection logic - not needed for standard API
 
 async function getStoredSetting(key, defaultValue) {
     try {
@@ -112,19 +68,7 @@ async function initializeGeminiSession(apiKey, customPrompt = '', selectedModel 
             systemInstruction: systemPrompt
         });
 
-        // Start a new chat session
-        activeChat = model.startChat({
-            history: [],
-            generationConfig: {
-                maxOutputTokens: 8192,
-                temperature: 0.7,
-            },
-        });
-
         geminiModel = model;
-
-        // Initialize new conversation session
-        initializeNewSession();
 
         isInitializingSession = false;
         sendToRenderer('session-initializing', false);
@@ -141,8 +85,6 @@ async function initializeGeminiSession(apiKey, customPrompt = '', selectedModel 
     }
 }
 
-// Audio capture functions removed - screenshot-only mode
-
 function setupGeminiIpcHandlers(geminiSessionRef) {
     // Store the geminiSessionRef globally
     global.geminiSessionRef = geminiSessionRef;
@@ -153,7 +95,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-image-content', async (event, { data }) => {
-        if (!activeChat || !geminiModel) {
+        if (!geminiModel) {
             return { success: false, error: 'No active Gemini session' };
         }
 
@@ -191,7 +133,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-text-message', async (event, text) => {
-        if (!activeChat) {
+        if (!geminiModel) {
             return { success: false, error: 'No active Gemini session' };
         }
 
@@ -216,8 +158,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             // Add the text
             messageParts.push(text.trim());
 
-            // Send to Gemini and get response
-            const result = await activeChat.sendMessage(messageParts);
+            const result = await geminiModel.generateContent(messageParts);
             const response = result.response;
             const responseText = response.text();
 
@@ -226,9 +167,6 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             // Update UI with response
             sendToRenderer('update-response', responseText);
             sendToRenderer('update-status', 'Ready');
-
-            // Save conversation turn
-            saveConversationTurn(text, responseText);
 
             return { success: true, response: responseText };
         } catch (error) {
@@ -240,8 +178,6 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
 
     ipcMain.handle('close-session', async event => {
         try {
-            // Clear active chat and model
-            activeChat = null;
             geminiModel = null;
             
             if (global.pendingImages) {
@@ -255,34 +191,11 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
-
-    // Conversation history IPC handlers
-    ipcMain.handle('get-current-session', async event => {
-        try {
-            return { success: true, data: getCurrentSessionData() };
-        } catch (error) {
-            console.error('Error getting current session:', error);
-            return { success: false, error: error.message };
-        }
-    });
-
-    ipcMain.handle('start-new-session', async event => {
-        try {
-            initializeNewSession();
-            return { success: true, sessionId: currentSessionId };
-        } catch (error) {
-            console.error('Error starting new session:', error);
-            return { success: false, error: error.message };
-        }
-    });
 }
 
 module.exports = {
     initializeGeminiSession,
     getStoredSetting,
     sendToRenderer,
-    initializeNewSession,
-    saveConversationTurn,
-    getCurrentSessionData,
     setupGeminiIpcHandlers,
 };

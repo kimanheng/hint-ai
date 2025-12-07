@@ -24,13 +24,9 @@ let offscreenCanvas = null;
 let offscreenContext = null;
 let currentImageQuality = 'medium'; // Store current image quality for manual screenshots
 
-const isLinux = process.platform === 'linux';
-const isMacOS = process.platform === 'darwin';
-
 // Token tracking system for rate limiting
 let tokenTracker = {
     tokens: [], // Array of {timestamp, count, type} objects
-    audioStartTime: null,
 
     // Add tokens to the tracker
     addTokens(count, type = 'image') {
@@ -58,25 +54,6 @@ let tokenTracker = {
         const totalTiles = tilesX * tilesY;
 
         return totalTiles * 258;
-    },
-
-    // Track audio tokens continuously
-    trackAudioTokens() {
-        if (!this.audioStartTime) {
-            this.audioStartTime = Date.now();
-            return;
-        }
-
-        const now = Date.now();
-        const elapsedSeconds = (now - this.audioStartTime) / 1000;
-
-        // Audio = 32 tokens per second
-        const audioTokens = Math.floor(elapsedSeconds * 32);
-
-        if (audioTokens > 0) {
-            this.addTokens(audioTokens, 'audio');
-            this.audioStartTime = now;
-        }
     },
 
     // Clean tokens older than 1 minute
@@ -113,11 +90,8 @@ let tokenTracker = {
     // Reset the tracker
     reset() {
         this.tokens = [];
-        this.audioStartTime = null;
     },
 };
-
-// Audio token tracking removed - screenshot-only mode
 
 async function initializeGemini() {
     const apiKey = localStorage.getItem('apiKey')?.trim();
@@ -154,7 +128,6 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
     console.log('🎯 Token tracker reset for new capture session');
 
     try {
-        // Get screen capture for screenshots only (no audio)
         console.log('Starting screenshot capture...');
         
         mediaStream = await navigator.mediaDevices.getDisplayMedia({
@@ -163,7 +136,7 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
                 width: { ideal: 1920 },
                 height: { ideal: 1080 },
             },
-            audio: false, // No audio capture
+            audio: false,
         });
 
         console.log('Screenshot capture started successfully');
@@ -190,8 +163,6 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
         cheddar.setStatus('error');
     }
 }
-
-// Audio processing functions removed - screenshot-only mode
 
 async function captureScreenshot(imageQuality = 'medium', isManual = false) {
     console.log(`Capturing ${isManual ? 'manual' : 'automated'} screenshot...`);
@@ -360,128 +331,34 @@ async function sendTextMessage(text) {
     }
 }
 
-// Conversation storage functions using IndexedDB
-let conversationDB = null;
-
-async function initConversationStorage() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open('ConversationHistory', 1);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-            conversationDB = request.result;
-            resolve(conversationDB);
-        };
-
-        request.onupgradeneeded = event => {
-            const db = event.target.result;
-
-            // Create sessions store
-            if (!db.objectStoreNames.contains('sessions')) {
-                const sessionStore = db.createObjectStore('sessions', { keyPath: 'sessionId' });
-                sessionStore.createIndex('timestamp', 'timestamp', { unique: false });
-            }
-        };
-    });
-}
-
-async function saveConversationSession(sessionId, conversationHistory) {
-    if (!conversationDB) {
-        await initConversationStorage();
-    }
-
-    const transaction = conversationDB.transaction(['sessions'], 'readwrite');
-    const store = transaction.objectStore('sessions');
-
-    const sessionData = {
-        sessionId: sessionId,
-        timestamp: parseInt(sessionId),
-        conversationHistory: conversationHistory,
-        lastUpdated: Date.now(),
-    };
-
-    return new Promise((resolve, reject) => {
-        const request = store.put(sessionData);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-    });
-}
-
-async function getConversationSession(sessionId) {
-    if (!conversationDB) {
-        await initConversationStorage();
-    }
-
-    const transaction = conversationDB.transaction(['sessions'], 'readonly');
-    const store = transaction.objectStore('sessions');
-
-    return new Promise((resolve, reject) => {
-        const request = store.get(sessionId);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-    });
-}
-
-async function getAllConversationSessions() {
-    if (!conversationDB) {
-        await initConversationStorage();
-    }
-
-    const transaction = conversationDB.transaction(['sessions'], 'readonly');
-    const store = transaction.objectStore('sessions');
-    const index = store.index('timestamp');
-
-    return new Promise((resolve, reject) => {
-        const request = index.getAll();
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-            // Sort by timestamp descending (newest first)
-            const sessions = request.result.sort((a, b) => b.timestamp - a.timestamp);
-            resolve(sessions);
-        };
-    });
-}
-
-// Listen for conversation data from main process
-ipcRenderer.on('save-conversation-turn', async (event, data) => {
-    try {
-        await saveConversationSession(data.sessionId, data.fullHistory);
-        console.log('Conversation session saved:', data.sessionId);
-    } catch (error) {
-        console.error('Error saving conversation session:', error);
-    }
-});
-
-// Initialize conversation storage when renderer loads
-initConversationStorage().catch(console.error);
-
 // Listen for emergency erase command from main process
 ipcRenderer.on('clear-sensitive-data', () => {
     console.log('Clearing renderer-side sensitive data...');
     localStorage.removeItem('apiKey');
     localStorage.removeItem('customPrompt');
-    // Consider clearing IndexedDB as well for full erasure
 });
 
 // Handle shortcuts based on current view
-function handleShortcut(action) {
+async function handleShortcut(action) {
     const currentView = cheddar.getCurrentView();
 
     if (action === 'send') {
-        // Ctrl+Enter: Start session on main view, or send message on assistant view
+        // Ctrl+Enter: Start session on main view, or screenshot + send on assistant view
         if (currentView === 'main') {
             cheddar.element().handleStart();
         } else if (currentView === 'assistant') {
+            // Capture screenshot and send directly to Gemini
+            await captureManualScreenshot();
             // Trigger send on assistant view
             const assistantView = cheddar.element().shadowRoot.querySelector('assistant-view');
             if (assistantView) {
                 assistantView.handleSendText();
             }
         }
-    } else if (action === 'screenshot') {
-        // Ctrl+S: Take screenshot (only when not on main view)
+    } else if (action === 'goBack') {
+        // Ctrl+Backspace: Go back to main view
         if (currentView !== 'main') {
-            captureManualScreenshot();
+            cheddar.element().handleClose();
         }
     }
 }
@@ -510,20 +387,11 @@ const cheddar = {
     sendTextMessage,
     handleShortcut,
 
-    // Conversation history functions
-    getAllConversationSessions,
-    getConversationSession,
-    initConversationStorage,
-
     // Content protection function
     getContentProtection: () => {
         const contentProtection = localStorage.getItem('contentProtection');
         return contentProtection !== null ? contentProtection === 'true' : true;
     },
-
-    // Platform detection
-    isLinux: isLinux,
-    isMacOS: isMacOS,
 };
 
 // Make it globally available

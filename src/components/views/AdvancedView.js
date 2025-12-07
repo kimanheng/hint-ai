@@ -6,8 +6,7 @@ export class AdvancedView extends LitElement {
         * {
             font-family:
                 'Inter',
-                -apple-system,
-                BlinkMacSystemFont,
+                'Segoe UI',
                 sans-serif;
             cursor: default;
             user-select: none;
@@ -18,6 +17,8 @@ export class AdvancedView extends LitElement {
             padding: 12px;
             margin: 0 auto;
             max-width: 700px;
+            height: 100%;
+            overflow-y: auto;
         }
 
         .advanced-container {
