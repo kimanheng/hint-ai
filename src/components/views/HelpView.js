@@ -258,13 +258,11 @@ export class HelpView extends LitElement {
             moveLeft: 'Ctrl+Shift+Left',
             moveRight: 'Ctrl+Shift+Right',
             toggleVisibility: 'Ctrl+\\',
-            toggleClickThrough: 'Ctrl+M',
             nextStep: 'Ctrl+Enter',
             goBack: 'Ctrl+Backspace',
-            previousResponse: 'Ctrl+[',
-            nextResponse: 'Ctrl+]',
             scrollUp: 'Ctrl+Up',
             scrollDown: 'Ctrl+Down',
+            emergencyErase: 'Ctrl+Shift+E',
         };
     }
 
@@ -336,12 +334,12 @@ export class HelpView extends LitElement {
                         <div class="keyboard-group">
                             <div class="keyboard-group-title">Window Control</div>
                             <div class="shortcut-item">
-                                <span class="shortcut-description">Toggle click-through mode</span>
-                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.toggleClickThrough)}</div>
-                            </div>
-                            <div class="shortcut-item">
                                 <span class="shortcut-description">Toggle window visibility</span>
                                 <div class="shortcut-keys">${this.formatKeybind(this.keybinds.toggleVisibility)}</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-description">Emergency erase</span>
+                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.emergencyErase)}</div>
                             </div>
                         </div>
 
@@ -358,15 +356,7 @@ export class HelpView extends LitElement {
                         </div>
 
                         <div class="keyboard-group">
-                            <div class="keyboard-group-title">Response Navigation</div>
-                            <div class="shortcut-item">
-                                <span class="shortcut-description">Previous response</span>
-                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.previousResponse)}</div>
-                            </div>
-                            <div class="shortcut-item">
-                                <span class="shortcut-description">Next response</span>
-                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextResponse)}</div>
-                            </div>
+                            <div class="keyboard-group-title">Scrolling</div>
                             <div class="shortcut-item">
                                 <span class="shortcut-description">Scroll response up</span>
                                 <div class="shortcut-keys">${this.formatKeybind(this.keybinds.scrollUp)}</div>
@@ -405,14 +395,12 @@ export class HelpView extends LitElement {
                             <strong>Position Window:</strong> Use keyboard shortcuts to move the window to a discreet location
                         </div>
                         <div class="usage-step">
-                            <strong>Click-through Mode:</strong> Use ${this.formatKeybind(this.keybinds.toggleClickThrough)} to make the window
-                            click-through
+                            <strong>Toggle Visibility:</strong> Use ${this.formatKeybind(this.keybinds.toggleVisibility)} to show/hide the window
                         </div>
                         <div class="usage-step"><strong>Get Answers:</strong> The AI will analyze your screen to provide exam answers</div>
                         <div class="usage-step"><strong>Ask Questions:</strong> Type specific questions to get detailed solutions</div>
                         <div class="usage-step">
-                            <strong>Navigate Responses:</strong> Use ${this.formatKeybind(this.keybinds.previousResponse)} and
-                            ${this.formatKeybind(this.keybinds.nextResponse)} to browse through AI responses
+                            <strong>Emergency:</strong> Use ${this.formatKeybind(this.keybinds.emergencyErase)} to quickly clear and hide
                         </div>
                     </div>
                 </div>

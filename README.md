@@ -18,20 +18,16 @@ By using this project, you agree that you are responsible for complying with all
 
 | Action | Shortcut |
 |--------|----------|
-| Move Window Up | `Ctrl + Up` |
-| Move Window Down | `Ctrl + Down` |
-| Move Window Left | `Ctrl + Left` |
-| Move Window Right | `Ctrl + Right` |
+| Move Window Up | `Ctrl + Shift + Up` |
+| Move Window Down | `Ctrl + Shift + Down` |
+| Move Window Left | `Ctrl + Shift + Left` |
+| Move Window Right | `Ctrl + Shift + Right` |
 | Toggle Visibility | `Ctrl + \` |
-| Toggle Click-Through | `Ctrl + M` |
-| Next Step | `Ctrl + Enter` |
-| Screenshot | `Ctrl + S` |
-| Previous Response | `Ctrl + [` |
-| Next Response | `Ctrl + ]` |
-| Scroll Up | `Ctrl + Shift + Up` |
-| Scroll Down | `Ctrl + Shift + Down` |
+| Screenshot + Send | `Ctrl + Enter` |
+| Go Back | `Ctrl + Backspace` |
+| Scroll Up | `Ctrl + Up` |
+| Scroll Down | `Ctrl + Down` |
 | Emergency Erase | `Ctrl + Shift + E` |
-| Send Message | `Enter` |
 
 
 ## Requirements

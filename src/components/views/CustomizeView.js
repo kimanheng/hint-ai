@@ -551,13 +551,11 @@ export class CustomizeView extends LitElement {
             moveLeft: 'Ctrl+Shift+Left',
             moveRight: 'Ctrl+Shift+Right',
             toggleVisibility: 'Ctrl+\\',
-            toggleClickThrough: 'Ctrl+M',
             nextStep: 'Ctrl+Enter',
             goBack: 'Ctrl+Backspace',
-            previousResponse: 'Ctrl+[',
-            nextResponse: 'Ctrl+]',
             scrollUp: 'Ctrl+Up',
             scrollDown: 'Ctrl+Down',
+            emergencyErase: 'Ctrl+Shift+E',
         };
     }
 
@@ -602,15 +600,13 @@ export class CustomizeView extends LitElement {
             { key: 'nextStep', name: 'Screenshot + Send', description: 'Capture and send to AI' },
             { key: 'goBack', name: 'Go Back', description: 'Return to main view' },
             { key: 'toggleVisibility', name: 'Toggle Visibility', description: 'Show/hide window' },
-            { key: 'toggleClickThrough', name: 'Click-through Mode', description: 'Toggle click-through' },
             { key: 'moveUp', name: 'Move Up', description: 'Move window up' },
             { key: 'moveDown', name: 'Move Down', description: 'Move window down' },
             { key: 'moveLeft', name: 'Move Left', description: 'Move window left' },
             { key: 'moveRight', name: 'Move Right', description: 'Move window right' },
-            { key: 'previousResponse', name: 'Previous Response', description: 'Navigate back' },
-            { key: 'nextResponse', name: 'Next Response', description: 'Navigate forward' },
             { key: 'scrollUp', name: 'Scroll Up', description: 'Scroll content up' },
             { key: 'scrollDown', name: 'Scroll Down', description: 'Scroll content down' },
+            { key: 'emergencyErase', name: 'Emergency Erase', description: 'Clear all and hide' },
         ];
     }
 

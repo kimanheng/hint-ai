@@ -146,11 +146,8 @@ function getDefaultKeybinds() {
         moveLeft: 'Ctrl+Shift+Left',
         moveRight: 'Ctrl+Shift+Right',
         toggleVisibility: 'Ctrl+\\',
-        toggleClickThrough: 'Ctrl+M',
         nextStep: 'Ctrl+Enter',
         goBack: 'Ctrl+Backspace',
-        previousResponse: 'Ctrl+[',
-        nextResponse: 'Ctrl+]',
         scrollUp: 'Ctrl+Up',
         scrollDown: 'Ctrl+Down',
         emergencyErase: 'Ctrl+Shift+E',
@@ -220,26 +217,6 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
         }
     }
 
-    // Register toggle click-through shortcut
-    if (keybinds.toggleClickThrough) {
-        try {
-            globalShortcut.register(keybinds.toggleClickThrough, () => {
-                mouseEventsIgnored = !mouseEventsIgnored;
-                if (mouseEventsIgnored) {
-                    mainWindow.setIgnoreMouseEvents(true, { forward: true });
-                    console.log('Mouse events ignored');
-                } else {
-                    mainWindow.setIgnoreMouseEvents(false);
-                    console.log('Mouse events enabled');
-                }
-                mainWindow.webContents.send('click-through-toggled', mouseEventsIgnored);
-            });
-            console.log(`Registered toggleClickThrough: ${keybinds.toggleClickThrough}`);
-        } catch (error) {
-            console.error(`Failed to register toggleClickThrough (${keybinds.toggleClickThrough}):`, error);
-        }
-    }
-
     // Register next step shortcut (starts session or sends message)
     if (keybinds.nextStep) {
         try {
@@ -276,32 +253,6 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered goBack: ${keybinds.goBack}`);
         } catch (error) {
             console.error(`Failed to register goBack (${keybinds.goBack}):`, error);
-        }
-    }
-
-    // Register previous response shortcut
-    if (keybinds.previousResponse) {
-        try {
-            globalShortcut.register(keybinds.previousResponse, () => {
-                console.log('Previous response shortcut triggered');
-                sendToRenderer('navigate-previous-response');
-            });
-            console.log(`Registered previousResponse: ${keybinds.previousResponse}`);
-        } catch (error) {
-            console.error(`Failed to register previousResponse (${keybinds.previousResponse}):`, error);
-        }
-    }
-
-    // Register next response shortcut
-    if (keybinds.nextResponse) {
-        try {
-            globalShortcut.register(keybinds.nextResponse, () => {
-                console.log('Next response shortcut triggered');
-                sendToRenderer('navigate-next-response');
-            });
-            console.log(`Registered nextResponse: ${keybinds.nextResponse}`);
-        } catch (error) {
-            console.error(`Failed to register nextResponse (${keybinds.nextResponse}):`, error);
         }
     }
 
