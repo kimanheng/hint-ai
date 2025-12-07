@@ -141,6 +141,14 @@ export class HintAIApp extends LitElement {
             ipcRenderer.on('click-through-toggled', (_, isEnabled) => {
                 this._isClickThrough = isEnabled;
             });
+            ipcRenderer.on('new-session-started', () => {
+                // Clear the assistant view when a new session is started
+                if (this._assistantView) {
+                    this._assistantView.clearMessages();
+                    this._assistantView.setPendingScreenshot(null);
+                }
+                this._pendingScreenshot = null;
+            });
         }
     }
 
@@ -151,6 +159,7 @@ export class HintAIApp extends LitElement {
             ipcRenderer.removeAllListeners('update-response');
             ipcRenderer.removeAllListeners('update-status');
             ipcRenderer.removeAllListeners('click-through-toggled');
+            ipcRenderer.removeAllListeners('new-session-started');
         }
     }
 

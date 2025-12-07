@@ -557,6 +557,7 @@ export class CustomizeView extends LitElement {
             scrollDown: 'Ctrl+Down',
             emergencyErase: 'Ctrl+Shift+E',
             toggleModel: 'Ctrl+T',
+            newSession: 'Ctrl+S',
         };
     }
 
@@ -600,6 +601,7 @@ export class CustomizeView extends LitElement {
         return [
             { key: 'nextStep', name: 'Screenshot + Send', description: 'Capture and send to AI' },
             { key: 'goBack', name: 'Go Back', description: 'Return to main view' },
+            { key: 'newSession', name: 'New Session', description: 'Clear chat and start fresh' },
             { key: 'toggleVisibility', name: 'Toggle Visibility', description: 'Show/hide window' },
             { key: 'toggleModel', name: 'Toggle AI Model', description: 'Switch between Gemini models' },
             { key: 'moveUp', name: 'Move Up', description: 'Move window up' },

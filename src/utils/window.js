@@ -152,6 +152,7 @@ function getDefaultKeybinds() {
         scrollDown: 'Ctrl+Down',
         emergencyErase: 'Ctrl+Shift+E',
         toggleModel: 'Ctrl+T',
+        newSession: 'Ctrl+S',
     };
 }
 
@@ -350,6 +351,21 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered toggleModel: ${keybinds.toggleModel}`);
         } catch (error) {
             console.error(`Failed to register toggleModel (${keybinds.toggleModel}):`, error);
+        }
+    }
+
+    // Register new session shortcut
+    if (keybinds.newSession) {
+        try {
+            globalShortcut.register(keybinds.newSession, async () => {
+                console.log('New Session shortcut triggered');
+                mainWindow.webContents.executeJavaScript(`
+                    cheddar.handleShortcut('newSession');
+                `);
+            });
+            console.log(`Registered newSession: ${keybinds.newSession}`);
+        } catch (error) {
+            console.error(`Failed to register newSession (${keybinds.newSession}):`, error);
         }
     }
 }

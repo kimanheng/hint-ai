@@ -347,10 +347,15 @@ async function handleShortcut(action) {
         if (currentView === 'main') {
             cheddar.element().handleStart();
         } else if (currentView === 'assistant') {
+            // Check if still processing a previous message
+            const assistantView = cheddar.element().shadowRoot.querySelector('assistant-view');
+            if (assistantView && assistantView.isProcessing) {
+                console.log('Still processing previous message, please wait...');
+                return;
+            }
             // Capture screenshot and send directly to Gemini
             await captureManualScreenshot();
             // Trigger send on assistant view
-            const assistantView = cheddar.element().shadowRoot.querySelector('assistant-view');
             if (assistantView) {
                 assistantView.handleSendText();
             }
@@ -360,6 +365,34 @@ async function handleShortcut(action) {
         if (currentView !== 'main') {
             cheddar.element().handleClose();
         }
+    } else if (action === 'newSession') {
+        // Ctrl+S: Start a new session (clear chat history)
+        if (currentView === 'assistant') {
+            await startNewSession();
+        }
+    }
+}
+
+// Start a new chat session (clear history but stay in assistant view)
+async function startNewSession() {
+    try {
+        const result = await ipcRenderer.invoke('new-chat-session');
+        if (result.success) {
+            // Clear the assistant view chat
+            const app = cheddar.element();
+            if (app && app._assistantView) {
+                app._assistantView.clearMessages();
+                app._assistantView.setPendingScreenshot(null);
+            }
+            app._pendingScreenshot = null;
+            console.log('🔄 New session started - chat history cleared');
+        } else {
+            console.error('Failed to start new session:', result.error);
+            cheddar.setStatus('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error starting new session:', error);
+        cheddar.setStatus('Error starting new session');
     }
 }
 

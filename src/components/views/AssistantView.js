@@ -358,6 +358,7 @@ export class AssistantView extends LitElement {
         onSendText: { type: Function },
         selectedModel: { type: String },
         isTyping: { type: Boolean },
+        isProcessing: { type: Boolean },
         pendingScreenshot: { type: String },
     };
 
@@ -367,6 +368,7 @@ export class AssistantView extends LitElement {
         this.onSendText = () => {};
         this.selectedModel = localStorage.getItem('selectedModel') || 'gemini-2.5-flash';
         this.isTyping = false;
+        this.isProcessing = false;
         this.pendingScreenshot = null;
     }
 
@@ -393,9 +395,10 @@ export class AssistantView extends LitElement {
     }
 
     addMessage(type, content, screenshot = null) {
-        // If adding an AI message, stop typing indicator
+        // If adding an AI message, stop typing indicator and allow new messages
         if (type === 'ai') {
             this.isTyping = false;
+            this.isProcessing = false;
         }
         
         this.messages = [...this.messages, {
@@ -416,6 +419,10 @@ export class AssistantView extends LitElement {
 
     setTyping(isTyping) {
         this.isTyping = isTyping;
+        // If typing is stopped (e.g., error), also reset processing state
+        if (!isTyping) {
+            this.isProcessing = false;
+        }
         if (isTyping) {
             // Auto-scroll to show typing indicator
             this.updateComplete.then(() => {
@@ -444,6 +451,8 @@ export class AssistantView extends LitElement {
 
     clearMessages() {
         this.messages = [];
+        this.isProcessing = false;
+        this.isTyping = false;
     }
 
     renderMarkdown(content) {
@@ -609,6 +618,12 @@ export class AssistantView extends LitElement {
     }
 
     async handleSendText() {
+        // Don't allow sending if already processing
+        if (this.isProcessing) {
+            console.log('Still processing previous message, please wait...');
+            return;
+        }
+
         const textInput = this.shadowRoot.querySelector('#textInput');
         const hasText = textInput && textInput.value.trim();
         const hasScreenshot = this.pendingScreenshot;
@@ -619,6 +634,7 @@ export class AssistantView extends LitElement {
             const message = hasText ? textInput.value.trim() : 'Answer all questions with maximum accuracy. Provide answer first, then provide brief explanations for your answer.';
             if (textInput) textInput.value = '';
             this.isTyping = true; // Show typing indicator
+            this.isProcessing = true; // Block further sends
             await this.onSendText(message);
         }
     }

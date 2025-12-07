@@ -3,6 +3,7 @@ const { BrowserWindow, ipcMain } = require('electron');
 
 let isInitializingSession = false;
 let geminiModel = null;
+let geminiChat = null; // Chat session for maintaining conversation history
 
 function sendToRenderer(channel, data) {
     const windows = BrowserWindow.getAllWindows();
@@ -69,6 +70,11 @@ async function initializeGeminiSession(apiKey, customPrompt = '', selectedModel 
         });
 
         geminiModel = model;
+        
+        // Start a chat session to maintain conversation history
+        geminiChat = model.startChat({
+            history: [],
+        });
 
         isInitializingSession = false;
         sendToRenderer('session-initializing', false);
@@ -133,7 +139,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-text-message', async (event, text) => {
-        if (!geminiModel) {
+        if (!geminiChat) {
             return { success: false, error: 'No active Gemini session' };
         }
 
@@ -158,7 +164,8 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             // Add the text
             messageParts.push(text.trim());
 
-            const result = await geminiModel.generateContent(messageParts);
+            // Use chat.sendMessage to maintain conversation history
+            const result = await geminiChat.sendMessage(messageParts);
             const response = result.response;
             const responseText = response.text();
 
@@ -179,6 +186,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     ipcMain.handle('close-session', async event => {
         try {
             geminiModel = null;
+            geminiChat = null;
             
             if (global.pendingImages) {
                 global.pendingImages = [];
@@ -188,6 +196,32 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: true };
         } catch (error) {
             console.error('Error closing session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // Start a new chat session (clear history but keep the model)
+    ipcMain.handle('new-chat-session', async event => {
+        try {
+            if (!geminiModel) {
+                return { success: false, error: 'No active Gemini model' };
+            }
+            
+            // Start a fresh chat session
+            geminiChat = geminiModel.startChat({
+                history: [],
+            });
+            
+            if (global.pendingImages) {
+                global.pendingImages = [];
+            }
+
+            console.log('🔄 New chat session started');
+            sendToRenderer('update-status', 'New session started');
+            sendToRenderer('new-session-started'); // Notify renderer to clear UI
+            return { success: true };
+        } catch (error) {
+            console.error('Error starting new chat session:', error);
             return { success: false, error: error.message };
         }
     });
