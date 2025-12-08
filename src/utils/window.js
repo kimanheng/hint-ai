@@ -417,6 +417,65 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
         }
     });
 
+    // Native screen capture that bypasses content protection
+    // Uses desktopCapturer directly to capture raw screen content
+    ipcMain.handle('capture-screen-native', async (event, options = {}) => {
+        try {
+            const { desktopCapturer } = require('electron');
+            const primaryDisplay = screen.getPrimaryDisplay();
+            const { width, height } = primaryDisplay.size;
+            const scaleFactor = primaryDisplay.scaleFactor || 1;
+            
+            // Calculate capture dimensions based on quality
+            let captureWidth = width * scaleFactor;
+            let captureHeight = height * scaleFactor;
+            
+            if (options.quality === 'low') {
+                captureWidth = Math.floor(captureWidth * 0.5);
+                captureHeight = Math.floor(captureHeight * 0.5);
+            } else if (options.quality === 'medium') {
+                captureWidth = Math.floor(captureWidth * 0.75);
+                captureHeight = Math.floor(captureHeight * 0.75);
+            }
+            // 'high' uses full resolution
+            
+            const sources = await desktopCapturer.getSources({
+                types: ['screen'],
+                thumbnailSize: { width: captureWidth, height: captureHeight }
+            });
+            
+            if (sources.length === 0) {
+                return { success: false, error: 'No screen sources available' };
+            }
+            
+            // Get the primary screen (first source)
+            const source = sources[0];
+            const thumbnail = source.thumbnail;
+            
+            if (!thumbnail || thumbnail.isEmpty()) {
+                return { success: false, error: 'Failed to capture screen thumbnail' };
+            }
+            
+            // Convert to JPEG with specified quality
+            let jpegQuality = 70; // default medium
+            if (options.quality === 'high') jpegQuality = 90;
+            else if (options.quality === 'low') jpegQuality = 50;
+            
+            const jpegBuffer = thumbnail.toJPEG(jpegQuality);
+            const base64data = jpegBuffer.toString('base64');
+            
+            return { 
+                success: true, 
+                data: base64data,
+                width: captureWidth,
+                height: captureHeight
+            };
+        } catch (error) {
+            console.error('Error capturing screen natively:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     function animateWindowResize(mainWindow, targetWidth, targetHeight, layoutMode) {
         return new Promise(resolve => {
             // Check if window is destroyed before starting animation

@@ -202,15 +202,26 @@ async function captureScreenshot(imageQuality = 'medium', isManual = false) {
 
     offscreenContext.drawImage(hiddenVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
-    // Check if image was drawn properly by sampling a pixel
-    const imageData = offscreenContext.getImageData(0, 0, 1, 1);
-    const isBlank = imageData.data.every((value, index) => {
-        // Check if all pixels are black (0,0,0) or transparent
-        return index === 3 ? true : value === 0;
-    });
+    // Check if image was drawn properly by sampling multiple pixels
+    const imageData = offscreenContext.getImageData(0, 0, 10, 10);
+    let nonBlackPixels = 0;
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        // Check if pixel is not black (has any color)
+        if (imageData.data[i] > 5 || imageData.data[i + 1] > 5 || imageData.data[i + 2] > 5) {
+            nonBlackPixels++;
+        }
+    }
+    const isBlank = nonBlackPixels < 5; // Consider blank if less than 5 non-black pixels
 
     if (isBlank) {
-        console.warn('Screenshot appears to be blank/black');
+        console.warn('Screenshot appears to be blank/black - attempting native capture to bypass content protection');
+        // Try native capture which bypasses content protection
+        const nativeSuccess = await captureNativeScreenshot(imageQuality);
+        if (nativeSuccess) {
+            console.log('Native capture succeeded for blank screen');
+            return Promise.resolve(true);
+        }
+        console.warn('Native capture also failed');
     }
 
     let qualityValue;
@@ -228,64 +239,147 @@ async function captureScreenshot(imageQuality = 'medium', isManual = false) {
             qualityValue = 0.7; // Default to medium
     }
 
-    offscreenCanvas.toBlob(
-        async blob => {
-            if (!blob) {
-                console.error('Failed to create blob from canvas');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const base64data = reader.result.split(',')[1];
-
-                // Validate base64 data
-                if (!base64data || base64data.length < 100) {
-                    console.error('Invalid base64 data generated');
+    // Wrap in Promise to ensure we wait for the screenshot to be fully processed
+    return new Promise((resolve, reject) => {
+        offscreenCanvas.toBlob(
+            async blob => {
+                if (!blob) {
+                    console.error('Failed to create blob from canvas');
+                    reject(new Error('Failed to create blob from canvas'));
                     return;
                 }
 
-                const result = await ipcRenderer.invoke('send-image-content', {
-                    data: base64data,
-                });
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                        const base64data = reader.result.split(',')[1];
 
-                if (result.success) {
-                    // Track image tokens after successful send
-                    const imageTokens = tokenTracker.calculateImageTokens(offscreenCanvas.width, offscreenCanvas.height);
-                    tokenTracker.addTokens(imageTokens, 'image');
-                    console.log(`📊 Image sent successfully - ${imageTokens} tokens used (${offscreenCanvas.width}x${offscreenCanvas.height})`);
-                    
-                    // Store screenshot for display in chat (both in app and assistant view)
-                    const app = window.cheddar && window.cheddar.e();
-                    if (app) {
-                        app._pendingScreenshot = base64data;
-                        if (app._assistantView) {
-                            app._assistantView.setPendingScreenshot(base64data);
+                        // Validate base64 data
+                        if (!base64data || base64data.length < 100) {
+                            console.error('Invalid base64 data generated');
+                            reject(new Error('Invalid base64 data generated'));
+                            return;
                         }
+
+                        const result = await ipcRenderer.invoke('send-image-content', {
+                            data: base64data,
+                        });
+
+                        if (result.success) {
+                            // Track image tokens after successful send
+                            const imageTokens = tokenTracker.calculateImageTokens(offscreenCanvas.width, offscreenCanvas.height);
+                            tokenTracker.addTokens(imageTokens, 'image');
+                            console.log(`📊 Image sent successfully - ${imageTokens} tokens used (${offscreenCanvas.width}x${offscreenCanvas.height})`);
+                            
+                            // Store screenshot for display in chat (both in app and assistant view)
+                            const app = window.cheddar && window.cheddar.e();
+                            if (app) {
+                                app._pendingScreenshot = base64data;
+                                if (app._assistantView) {
+                                    app._assistantView.setPendingScreenshot(base64data);
+                                }
+                            }
+                            resolve(true);
+                        } else {
+                            console.error('Failed to send image:', result.error);
+                            reject(new Error(result.error));
+                        }
+                    } catch (error) {
+                        console.error('Error processing screenshot:', error);
+                        reject(error);
                     }
-                } else {
-                    console.error('Failed to send image:', result.error);
-                }
-            };
-            reader.readAsDataURL(blob);
-        },
-        'image/jpeg',
-        qualityValue
-    );
+                };
+                reader.onerror = () => {
+                    console.error('FileReader error');
+                    reject(new Error('FileReader error'));
+                };
+                reader.readAsDataURL(blob);
+            },
+            'image/jpeg',
+            qualityValue
+        );
+    });
 }
 
 async function captureManualScreenshot(imageQuality = null) {
     console.log('Manual screenshot triggered');
     const quality = imageQuality || currentImageQuality;
-    await captureScreenshot(quality, true); // Pass true for isManual
-    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for screenshot to be stored
-    
-    // Just store the screenshot, let user type their own message
-    cheddar.setStatus('Screenshot captured - type your message');
+    try {
+        // First try native capture which bypasses content protection
+        const nativeResult = await captureNativeScreenshot(quality);
+        if (nativeResult) {
+            cheddar.setStatus('Screenshot captured - type your message');
+            return true;
+        }
+        
+        // Fallback to stream-based capture if native fails and we have a stream
+        if (mediaStream) {
+            await captureScreenshot(quality, true);
+            cheddar.setStatus('Screenshot captured - type your message');
+            return true;
+        }
+        
+        throw new Error('No capture method available');
+    } catch (error) {
+        console.error('Failed to capture manual screenshot:', error);
+        cheddar.setStatus('Failed to capture screenshot');
+        return false;
+    }
+}
+
+// Native screen capture that bypasses content protection
+// Uses Electron's desktopCapturer API directly in main process
+async function captureNativeScreenshot(imageQuality = 'medium') {
+    console.log('Attempting native screenshot capture (bypasses content protection)...');
+    try {
+        const result = await ipcRenderer.invoke('capture-screen-native', { quality: imageQuality });
+        
+        if (!result.success) {
+            console.error('Native capture failed:', result.error);
+            return false;
+        }
+        
+        const base64data = result.data;
+        
+        // Validate base64 data
+        if (!base64data || base64data.length < 100) {
+            console.error('Invalid base64 data from native capture');
+            return false;
+        }
+        
+        // Send to Gemini
+        const sendResult = await ipcRenderer.invoke('send-image-content', {
+            data: base64data,
+        });
+        
+        if (sendResult.success) {
+            // Track image tokens after successful send
+            const imageTokens = tokenTracker.calculateImageTokens(result.width, result.height);
+            tokenTracker.addTokens(imageTokens, 'image');
+            console.log(`📊 Native screenshot sent successfully - ${imageTokens} tokens used (${result.width}x${result.height})`);
+            
+            // Store screenshot for display in chat
+            const app = window.cheddar && window.cheddar.e();
+            if (app) {
+                app._pendingScreenshot = base64data;
+                if (app._assistantView) {
+                    app._assistantView.setPendingScreenshot(base64data);
+                }
+            }
+            return true;
+        } else {
+            console.error('Failed to send native screenshot:', sendResult.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error in native screenshot capture:', error);
+        return false;
+    }
 }
 
 // Expose functions to global scope for external access
 window.captureManualScreenshot = captureManualScreenshot;
+window.captureNativeScreenshot = captureNativeScreenshot;
 
 function stopCapture() {
     if (screenshotInterval) {
@@ -354,9 +448,9 @@ async function handleShortcut(action) {
                 return;
             }
             // Capture screenshot and send directly to Gemini
-            await captureManualScreenshot();
-            // Trigger send on assistant view
-            if (assistantView) {
+            const success = await captureManualScreenshot();
+            // Trigger send on assistant view only if screenshot was captured successfully
+            if (success && assistantView) {
                 assistantView.handleSendText();
             }
         }
